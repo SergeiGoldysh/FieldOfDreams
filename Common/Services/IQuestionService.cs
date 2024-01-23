@@ -11,9 +11,9 @@ namespace Common.Services
     public interface IQuestionService
     {
 
-        public Task<Question> AddQuestionAsync(QuestionDto questionDto);
+        public Task<QuestionResponseDto> AddQuestionAsync(QuestionDto questionDto);
         public Task<List<QuestionWithAnswersForGetDto>> GetAllQuestionsWithAnswersAsync();
-        public Task<GetTrueAnswerDto> GetTrueAnswer(int questionId, int answerId, int userId);
+        public Task<GetTrueAnswerResponseDto> GetTrueAnswer(int questionId, int answerId, int userId);
         public Task<UseHintResponseDto> UseHint(int questionId, int hintId, int userId, int? answerId = null);
 
 

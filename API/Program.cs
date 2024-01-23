@@ -11,6 +11,8 @@ using System.Text;
 using BL.JWT;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +35,9 @@ builder.Services.AddScoped<IRepository<Answer>, Repository<Answer>>();
 builder.Services.AddScoped<IRepository<User>, Repository<User>>();
 builder.Services.AddScoped<IRepository<UserHint>, Repository<UserHint>>();
 builder.Services.AddScoped<IRepository<Hint>, Repository<Hint>>();
+builder.Services.AddScoped<BL.JWT.JwtSettings>();
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
 
 // Configure Swagger/OpenAPI
 

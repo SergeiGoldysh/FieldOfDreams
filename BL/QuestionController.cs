@@ -13,6 +13,8 @@ using System.Web.Http;
 using static System.Net.Mime.MediaTypeNames;
 using System.Web.Http.Results;
 using Common.Responses;
+using BL.JWT;
+using Microsoft.Extensions.Options;
 
 namespace BL
 {
@@ -24,6 +26,7 @@ namespace BL
         private readonly IRepository<UserHint> _userHintRepository;
         private readonly IRepository<GameReport> _gameReportRepository;
         private readonly IRepository<User> _userRepository;
+        
 
         public QuestionController(IRepository<Question> questionRepository,
             IRepository<Answer> answerRepository, IRepository<UserHint> userHintRepository,
@@ -34,34 +37,41 @@ namespace BL
             _userHintRepository = userHintRepository;
             _gameReportRepository = gameReportRepository;
             _userRepository = userRepository;
+            
         }
 
-        public async Task<Question> AddQuestionAsync(QuestionDto questionDto)
+        public async Task<QuestionResponseDto> AddQuestionAsync(QuestionDto questionDto)
         {
+            var questionAll = await _questionRepository.GetAllAsync();
+            var questionTest = questionAll.FirstOrDefault(q=>q.Text == questionDto.Text);
+            if (questionTest != null)
+            {
+                return new QuestionResponseDto(404, "This question already exists", true, null);
+            }
             Question question = new Question { Text = questionDto.Text };
 
             question = await _questionRepository.AddAsync(question);
 
-            // Передайте Id вопроса в ответы
-            questionDto.Answers.Take(4).ToList().ForEach(answer => answer.QuestionId = question.Id);
-
-            // Создайте и добавьте ответы в репозиторий
             var answers = questionDto.Answers.Take(4).Select(answerDto => new Answer
             {
                 Text = answerDto.Text,
                 IsCorrect = answerDto.IsCorrect,
-                QuestionId = answerDto.QuestionId
+                QuestionId = question.Id
             });
 
             await _answerRepository.AddAllAsync(answers);
 
-            return question;
+            return new QuestionResponseDto(200, "Question added", true, question);
         }
 
         public async Task<List<QuestionWithAnswersForGetDto>> GetAllQuestionsWithAnswersAsync()
         {
             var questionsWithAnswers = await _questionRepository
                 .GetAllAsync(q => q.Include(q => q.Answers));
+            if(questionsWithAnswers.Count() > 0)
+            {
+                return null;
+            }
 
             return questionsWithAnswers.Select(q => new QuestionWithAnswersForGetDto
             {
@@ -73,14 +83,16 @@ namespace BL
                     Text = a.Text,
                 }).ToList()
             }).ToList();
+
         }
-        public async Task<GetTrueAnswerDto> GetTrueAnswer(int questionId, int answerId, int userId)
+
+        public async Task<GetTrueAnswerResponseDto> GetTrueAnswer(int questionId, int answerId, int userId)
         {
             var question = await _questionRepository.GetByIdAsync(questionId);
 
             if (question == null)
             {
-                return null;
+                return new GetTrueAnswerResponseDto(401, "Question not found", false, null);
             }
 
             var answers = await _answerRepository.GetAllAsync();
@@ -94,7 +106,7 @@ namespace BL
                 var user = await _userRepository.GetByIdAsync(userId);
                 if (user == null)
                 {
-                    return null;
+                    return new GetTrueAnswerResponseDto(401, "User not found", false, null);
                 }
 
                 var otherAnswer = answers
@@ -104,7 +116,7 @@ namespace BL
                 {
                     Id = otherAnswer.Id,
                     Text = otherAnswer.Text,
-                    Massage = "the answer is Incorrect. Game over",
+                    Massage = null,
                     IsCorrect = otherAnswer.IsCorrect,
                     QuestionId = otherAnswer.QuestionId
                 };
@@ -141,7 +153,8 @@ namespace BL
                     }
                 } 
 
-                return trueAnswerDto;
+                
+                return new GetTrueAnswerResponseDto(200, "The answer is Incorrect. Game over", false, trueAnswerDto);
             }
             else
             {
@@ -150,7 +163,7 @@ namespace BL
                 {
                     Id = trueAnswer.Id,
                     Text = trueAnswer.Text,
-                    Massage = "the answer is correct",
+                    Massage = null,
                     IsCorrect = trueAnswer.IsCorrect,
                     QuestionId = trueAnswer.QuestionId
                 };
@@ -194,8 +207,8 @@ namespace BL
                     }
                 }
 
-                return trueAnswerDto;
-                
+                return new GetTrueAnswerResponseDto(200, "The answer is correct", true, trueAnswerDto);
+
             }
 
         }

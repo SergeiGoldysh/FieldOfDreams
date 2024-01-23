@@ -12,7 +12,7 @@ namespace Common
         public string Text { get; set; }
 
         [MinLength(4, ErrorMessage = "At least 4 answers are required.")]
-        public List<AnswerDto> Answers { get; set; } = new List<AnswerDto>();
+        public List<AnswerWithQuestionDto> Answers { get; set; } = new List<AnswerWithQuestionDto>();
 
     }
 }

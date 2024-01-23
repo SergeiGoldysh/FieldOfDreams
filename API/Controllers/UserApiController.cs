@@ -1,5 +1,6 @@
 ﻿using BL;
 using Common;
+using Common.Responses;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Models.Entities;
@@ -25,12 +26,27 @@ namespace API.Controllers
             {
                 return BadRequest("Invalid question data");
             }
-            User user = await _userController.AddUserAsync(userDto);
-            if (user == null)
+            UserResponse userResponse = await _userController.AddUserAsync(userDto);
+            if (userResponse == null)
             {
                 return BadRequest("not found");
             }
-            return Ok(user);
+            return Ok(userResponse);
+        }
+
+        [HttpPost("AuthorizeUser")]
+        public async Task<IActionResult> AuthorizeUser([FromBody] UserAuthorizeDto userAuthorizeDto)
+        {
+            if (userAuthorizeDto == null)
+            {
+                return BadRequest("Invalid question data");
+            }
+            UserResponse userResponse = await _userController.AuthorizeUserAsync(userAuthorizeDto);
+            if (userResponse == null)
+            {
+                return BadRequest("not found");
+            }
+            return Ok(userResponse);
         }
     }
 }
