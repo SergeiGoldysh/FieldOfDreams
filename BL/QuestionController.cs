@@ -68,7 +68,7 @@ namespace BL
         {
             var questionsWithAnswers = await _questionRepository
                 .GetAllAsync(q => q.Include(q => q.Answers));
-            if(questionsWithAnswers.Count() > 0)
+            if (questionsWithAnswers.Count() == 0)
             {
                 return null;
             }
